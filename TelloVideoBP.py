@@ -58,7 +58,7 @@ class VideoStream(object):
 
     def open(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.port = 6038
+        self.port = 11111
         self.sock.bind(('', self.port))
         self.sock.settimeout(1.0)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 512 * 1024)
@@ -77,17 +77,15 @@ class VideoStream(object):
         while True:
             try:
                 data, _ = self.sock.recvfrom(self.udpsize)
+            except KeyboardInterrupt:
+                return
             except socket.timeout:
-                #log.error('video recv: timeout')
+                print('video recv: timeout')
                 # self.start_video()
                 data = None
-            except Exception:
-                pass
-                #log.error('video recv: %s' % str(ex))
-                #show_exception(ex)
+                continue
 
-            #self.log.debug('%s.handle_event(VIDEO_DATA, size=%d)' %
-            #                (self.name, len(data)))
+            print('VIDEO_DATA, size=%d)' % len(data))
             video_data = VideoData(data)
             self.prev_video_data = video_data
             if 0 < video_data.gap(self.prev_video_data):
@@ -95,8 +93,18 @@ class VideoStream(object):
 
             return data[2:]
 
-def main():
 
+def for_debug():
+    tello_address = ('192.168.10.1', 8889)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # socket for sending cmd
+    # to receive video -- send cmd: command, streamon
+    sock.sendto(b'command', tello_address)
+    print ('sent: command')
+    sock.sendto(b'streamon', tello_address)
+    print ('sent: streamon')
+
+def main():
+    for_debug()
 
     vs = VideoStream()
     vs.open()
@@ -141,9 +149,7 @@ def main():
             cv2.waitKey(1)
             frame_skip = int((time.time() - start_time)/frame.time_base) * 2
     except Exception as ex:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        #traceback.print_exception(exc_type, exc_value, exc_traceback)
-        print(ex)
+        print('main' + ex)
     finally:
         cv2.destroyAllWindows()
 
