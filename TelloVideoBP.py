@@ -1,17 +1,27 @@
-import threading
-from . protocol import *
+import socket
+import sys
+import time
+
+import av
+import cv2.cv2 as cv2  # for avoidance of pylint error
+import numpy as np
 
 # https://github.com/hanyazou/TelloPy/blob/develop-0.7.0/tellopy/_internal/tello.py
-
 
 class VideoData(object):
     packets_per_frame = 0
 
     def __init__(self, data):
-        self.h0 = byte(data[0])
-        self.h1 = byte(data[1])
+        self.h0 = VideoData.byte(data[0])
+        self.h1 = VideoData.byte(data[1])
         if VideoData.packets_per_frame < (self.h1 & 0x7f):
             VideoData.packets_per_frame = (self.h1 & 0x7f)
+
+    @classmethod
+    def byte(_, c):
+        if isinstance(c, str):
+            return ord(c)
+        return c
 
     def gap(self, video_data):
         if video_data is None:
@@ -33,67 +43,109 @@ class VideoData(object):
         return loss
 
 class VideoStream(object):
-    def __init__(self, drone):
-        self.drone = drone
-        self.log = drone.log
-        self.cond = threading.Condition()
+    def __init__(self):
+#        self.drone = drone
+#        self.log = drone.log
+#        self.cond = threading.Condition()
         self.queue = []
         self.closed = False
         self.prev_video_data = None
         self.wait_first_packet_in_frame = True
         self.ignore_packets = 0
-        self.name = 'VideoStream'
-        drone.subscribe(drone.EVENT_CONNECTED, self.__handle_event)
-        drone.subscribe(drone.EVENT_DISCONNECTED, self.__handle_event)
-        drone.subscribe(drone.EVENT_VIDEO_DATA, self.__handle_event)
+#        self.name = 'VideoStream'
+        self.udpsize = 2000
+
+
+    def open(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.port = 6038
+        self.sock.bind(('', self.port))
+        self.sock.settimeout(1.0)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 512 * 1024)
 
     def read(self, size):
-        self.cond.acquire()
-        try:
-            if len(self.queue) == 0 and not self.closed:
-                self.cond.wait(5.0)
-            data = bytes()
-            while 0 < len(self.queue) and len(data) + len(self.queue[0]) < size:
-                data = data + self.queue[0]
-                del self.queue[0]
-        finally:
-            self.cond.release()
-        # returning data of zero length indicates end of stream
-        self.log.debug('%s.read(size=%d) = %d' % (self.name, size, len(data)))
+        data = bytes()
+        while len(data) < size:
+            data = data + self.recv()
         return data
 
     def seek(self, offset, whence):
-        self.log.info('%s.seek(%d, %d)' % (str(self.name), offset, whence))
+        #self.log.info('%s.seek(%d, %d)' % (str(self.name), offset, whence))
         return -1
 
-    def __handle_event(self, event, sender, data):
-        if event is self.drone.EVENT_CONNECTED:
-            self.log.info('%s.handle_event(CONNECTED)' % (self.name))
-        elif event is self.drone.EVENT_DISCONNECTED:
-            self.log.info('%s.handle_event(DISCONNECTED)' % (self.name))
-            self.cond.acquire()
-            self.queue = []
-            self.closed = True
-            self.cond.notifyAll()
-            self.cond.release()
-        elif event is self.drone.EVENT_VIDEO_DATA:
-            self.log.debug('%s.handle_event(VIDEO_DATA, size=%d)' %
-                           (self.name, len(data)))
+    def recv(self):
+        while True:
+            try:
+                data, _ = self.sock.recvfrom(self.udpsize)
+            except socket.timeout:
+                #log.error('video recv: timeout')
+                # self.start_video()
+                data = None
+            except Exception:
+                pass
+                #log.error('video recv: %s' % str(ex))
+                #show_exception(ex)
+
+            #self.log.debug('%s.handle_event(VIDEO_DATA, size=%d)' %
+            #                (self.name, len(data)))
             video_data = VideoData(data)
-            if 0 < video_data.gap(self.prev_video_data):
-                self.wait_first_packet_in_frame = True
-
             self.prev_video_data = video_data
-            if self.wait_first_packet_in_frame and byte(data[1]) != 0:
-                self.ignore_packets += 1
-                return
-            if self.wait_first_packet_in_frame:
-                self.log.debug('%s.handle_event(VIDEO_DATA): ignore %d packets' %
-                               (self.name, self.ignore_packets))
-            self.ignore_packets = 0
-            self.wait_first_packet_in_frame = False
+            if 0 < video_data.gap(self.prev_video_data):
+                continue
 
-            self.cond.acquire()
-            self.queue.append(data[2:])
-            self.cond.notifyAll()
-            self.cond.release()
+            return data[2:]
+
+def main():
+
+
+    vs = VideoStream()
+    vs.open()
+
+    container = av.open(vs)
+    frame_skip = 300
+
+    __dictionary_name = cv2.aruco.DICT_7X7_100
+    __dictionary = cv2.aruco.getPredefinedDictionary(__dictionary_name)
+
+    preids_list = []
+    preids = set([])    # set variable
+    preids2 = set([])   # set
+    preids = set(preids_list)
+
+    try:
+        while True:
+            for frame in container.decode(video=0):
+                if 0 < frame_skip:
+                    frame_skip = frame_skip - 1
+                    continue
+
+                corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(np.array(frame.to_image()), __dictionary)
+                start_time = time.time()	# elapsed time(second) from 1970/1/1 00:00;00
+                image = cv2.cvtColor(np.array(frame.to_image()), cv2.COLOR_RGB2BGR)
+                image = cv2.aruco.drawDetectedMarkers(np.array(image), corners, ids)
+                # print('detect marker=',ids)
+                i = 0
+                if isinstance(ids, np.ndarray) == True:
+                    for elem in ids:
+                        preids_list = list(ids[i])
+                        value = preids_list[0]
+                        preids.add(value)
+                        i = i + 1
+                    print('Detected ArMark ID=', preids)
+                    preids2 = preids
+                # 読み込んだ画像の高さと幅を取得
+                height = int(image.shape[0])
+                width = int(image.shape[1])
+                resized_img = cv2.resize(image,(width,height))
+            cv2.imshow('Original', resized_img)
+            cv2.waitKey(1)
+            frame_skip = int((time.time() - start_time)/frame.time_base) * 2
+    except Exception as ex:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        #traceback.print_exception(exc_type, exc_value, exc_traceback)
+        print(ex)
+    finally:
+        cv2.destroyAllWindows()
+
+
+main()
