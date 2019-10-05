@@ -97,11 +97,22 @@ class VideoStream(object):
 def for_debug():
     tello_address = ('192.168.10.1', 8889)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # socket for sending cmd
+    sock.bind(('', 8889))
+
+    def recv():
+        rcvd, _ = sock.recvfrom(3000)
+        print('received: ' + str(rcvd))
+        return rcvd
+
     # to receive video -- send cmd: command, streamon
     sock.sendto(b'command', tello_address)
     print ('sent: command')
+    recv()
+
     sock.sendto(b'streamon', tello_address)
     print ('sent: streamon')
+    recv()
+
 
 def main():
     for_debug()
