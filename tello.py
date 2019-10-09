@@ -143,26 +143,29 @@ class Tello:
 
         """
 
-        print (">> send cmd: {}".format(command))
-        self.abort_flag = False
-        timer = threading.Timer(self.command_timeout, self.set_abort_flag)
+        for_debug=False
 
-        self.socket.sendto(command.encode('utf-8'), self.tello_address)
+        if for_debug:
+            print (">> send cmd: {}".format(command))
+            self.abort_flag = False
+            timer = threading.Timer(self.command_timeout, self.set_abort_flag)
 
-        timer.start()
-        while self.response is None:
-            if self.abort_flag is True:
-                break
-        timer.cancel()
-        
-        if self.response is None:
-            response = 'none_response'
-        else:
-            response = self.response.decode('utf-8')
+            self.socket.sendto(command.encode('utf-8'), self.tello_address)
 
-        self.response = None
+            timer.start()
+            while self.response is None:
+                if self.abort_flag is True:
+                    break
+            timer.cancel()
+            
+            if self.response is None:
+                response = 'none_response'
+            else:
+                response = self.response.decode('utf-8')
 
-        return response
+            self.response = None
+
+            return response
     
     def set_abort_flag(self):
         """
