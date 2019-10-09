@@ -80,7 +80,8 @@ class TelloUI:
         self.root.wm_protocol("WM_DELETE_WINDOW", self.onClose)
 
         # the sending_command will send command to tello every 5 seconds
-        self.sending_command_thread = threading.Thread(target = self._sendingCommand)
+        # self.sending_command_thread = threading.Thread(target = self._sendingCommand)
+
     def videoLoop(self):
         """
         The mainloop thread of Tkinter 

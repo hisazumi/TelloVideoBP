@@ -29,10 +29,12 @@ if __name__ == "__main__":
     telloui = TelloUI(drone, "./img/")
     telloui.marker_detected = marker_detected
 
-    # for debug
-    drone.send_command('command')
-    print('sent: command')
-    drone.send_command('streamon')
-    print('sent: streamon')
+    for_debug = False
+    if for_debug:
+        # for debug
+        drone.send_command('command')
+        print('sent: command')
+        drone.send_command('streamon')
+        print('sent: streamon')
 
     telloui.root.mainloop()
