@@ -3,18 +3,24 @@ from tello_control_ui_aruco import TelloUI
 from time import sleep
 import threading
 import sys
+from socket import *
 
 drone = False
 telloui = False
-commands = []
-all_detected_ids = set()
+
+addr = (gethostbyname("localhost"), 65008)
+sock = socket(AF_INET, SOCK_DGRAM)
+
+
+def send(str):
+    sock.sendto((str + ';').encode('utf-8'), addr)
+    print("sent: " + str)
 
 
 def marker_detected(ids):
-    global all_detected_ids
     print(ids)
-    all_detected_ids |= set(ids)
-    print(all_detected_ids)
+    for id in ids:
+        send(id)
 
 
 if __name__ == "__main__":
