@@ -20,7 +20,8 @@ def send(str):
 def marker_detected(markers):
     print(markers)
     for m in markers:
-        send("{0},{1},{2},{3}".format(m[0], int(m[1][0]*1000), int(m[1][1]*1000), int(m[1][2]*1000))
+        print(m)
+        send("{0},{1},{2},{3}".format(m[0], int(m[1][0][0]*1000), int(m[1][0][1]*1000), int(m[1][0][2]*1000)))
 
 
 if __name__ == "__main__":
