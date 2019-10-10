@@ -64,10 +64,10 @@ class TelloUI:
         self.btn_pause.pack(side="bottom", fill="both",
                             expand="yes", padx=10, pady=5)
 
-        #self.btn_landing = tki.Button(
-        #    self.root, text="Open Command Panel", relief="raised", command=self.openCmdWindow)
-        #self.btn_landing.pack(side="bottom", fill="both",
-        #                      expand="yes", padx=10, pady=5)
+        self.btn_landing = tki.Button(
+            self.root, text="Open Command Panel", relief="raised", command=self.openCmdWindow)
+        self.btn_landing.pack(side="bottom", fill="both",
+                              expand="yes", padx=10, pady=5)
         
         # start a thread that constantly pools the video sensor for
         # the most recently read frame
@@ -124,19 +124,19 @@ class TelloUI:
 
                     self.marker_detected(markers)
 
-            # transfer the format from frame to image         
-            image = Image.fromarray(self.frame)
+                # transfer the format from frame to image         
+                image = Image.fromarray(self.frame)
 
-            # we found compatibility problem between Tkinter,PIL and Macos,and it will 
-            # sometimes result the very long preriod of the "ImageTk.PhotoImage" function,
-            # so for Macos,we start a new thread to execute the _updateGUIImage function.
-            if system =="Windows" or system =="Linux":                
-                self._updateGUIImage(image)
+                # we found compatibility problem between Tkinter,PIL and Macos,and it will 
+                # sometimes result the very long preriod of the "ImageTk.PhotoImage" function,
+                # so for Macos,we start a new thread to execute the _updateGUIImage function.
+                if system =="Windows" or system =="Linux":                
+                    self._updateGUIImage(image)
 
-            else:
-                thread_tmp = threading.Thread(target=self._updateGUIImage,args=(image,))
-                thread_tmp.start()
-                time.sleep(0.03)                                                            
+                else:
+                    thread_tmp = threading.Thread(target=self._updateGUIImage,args=(image,))
+                    thread_tmp.start()
+                    time.sleep(0.03)                                                            
         except RuntimeError, e:
             print("[INFO] caught a RuntimeError")
 
