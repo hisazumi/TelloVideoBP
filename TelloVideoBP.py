@@ -17,10 +17,11 @@ def send(str):
     print("sent: " + str)
 
 
-def marker_detected(ids):
-    print(ids)
-    for id in ids:
-        send(str(id))
+def marker_detected(markers):
+    print(markers)
+    for m in markers:
+        print(m)
+        send("{0},{1},{2},{3}".format(m[0], int(m[1][0][0]*1000), int(m[1][0][1]*1000), int(m[1][0][2]*1000)))
 
 
 if __name__ == "__main__":
@@ -29,10 +30,9 @@ if __name__ == "__main__":
     telloui = TelloUI(drone, "./img/")
     telloui.marker_detected = marker_detected
 
-    for_debug=False
-
-    # for debug
+    for_debug = False
     if for_debug:
+        # for debug
         drone.send_command('command')
         print('sent: command')
         drone.send_command('streamon')

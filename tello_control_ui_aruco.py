@@ -64,10 +64,10 @@ class TelloUI:
         self.btn_pause.pack(side="bottom", fill="both",
                             expand="yes", padx=10, pady=5)
 
-        self.btn_landing = tki.Button(
-            self.root, text="Open Command Panel", relief="raised", command=self.openCmdWindow)
-        self.btn_landing.pack(side="bottom", fill="both",
-                              expand="yes", padx=10, pady=5)
+        #self.btn_landing = tki.Button(
+        #    self.root, text="Open Command Panel", relief="raised", command=self.openCmdWindow)
+        #self.btn_landing.pack(side="bottom", fill="both",
+        #                      expand="yes", padx=10, pady=5)
         
         # start a thread that constantly pools the video sensor for
         # the most recently read frame
@@ -80,7 +80,8 @@ class TelloUI:
         self.root.wm_protocol("WM_DELETE_WINDOW", self.onClose)
 
         # the sending_command will send command to tello every 5 seconds
-        self.sending_command_thread = threading.Thread(target = self._sendingCommand)
+        # self.sending_command_thread = threading.Thread(target = self._sendingCommand)
+
     def videoLoop(self):
         """
         The mainloop thread of Tkinter 
@@ -90,11 +91,11 @@ class TelloUI:
         try:
             # start the thread that get GUI image and drwa skeleton 
             time.sleep(0.5)
-            self.sending_command_thread.start()
+            #self.sending_command_thread.start()
             while not self.stopEvent.is_set():                
                 system = platform.system()
 
-            # read the frame for GUI show
+                # read the frame for GUI show
                 self.frame = self.tello.read()
                 if self.frame is None or self.frame.size == 0:
                     continue 
@@ -107,10 +108,12 @@ class TelloUI:
                 aruco.drawDetectedMarkers(self.frame, corners)
 
                 if ids is not None and ids[0][0] > 0 :
-                    self.marker_detected([id[0] for id in ids])
+                    markers = []
+
                     rvecs, tvecs, _objPoints = aruco.estimatePoseSingleMarkers(corners, self.markerLength, self.cameraMatrix, self.distCoeffs)
                     for i, corner in enumerate( corners ):
-                        #print( 'rvec {}, tvec {}'.format( rvecs[i], tvecs[i] ))
+                        markers.append((ids[i][0], tvecs[i]))
+
                         points = corner[0].astype(np.int32)
                         ar_center_x = int(np.median((points[0][0], points[1][0], points[2][0], points[3][0])))
                         ar_center_y = int(np.median((points[0][1], points[1][1], points[2][1], points[3][1])))
@@ -119,19 +122,21 @@ class TelloUI:
                         self.frame = cv2.putText(self.frame, 'id:{} {:.2f}m'.format(ids[i][0], tvecs[i][0][2]),(ar_center_x, ar_center_y + 40), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,cv2.LINE_AA)
                         aruco.drawAxis(self.frame, self.cameraMatrix, self.distCoeffs, rvecs[i], tvecs[i], 0.1)
 
+                    self.marker_detected(markers)
+
             # transfer the format from frame to image         
-                image = Image.fromarray(self.frame)
+            image = Image.fromarray(self.frame)
 
             # we found compatibility problem between Tkinter,PIL and Macos,and it will 
             # sometimes result the very long preriod of the "ImageTk.PhotoImage" function,
             # so for Macos,we start a new thread to execute the _updateGUIImage function.
-                if system =="Windows" or system =="Linux":                
-                    self._updateGUIImage(image)
+            if system =="Windows" or system =="Linux":                
+                self._updateGUIImage(image)
 
-                else:
-                    thread_tmp = threading.Thread(target=self._updateGUIImage,args=(image,))
-                    thread_tmp.start()
-                    time.sleep(0.03)                                                            
+            else:
+                thread_tmp = threading.Thread(target=self._updateGUIImage,args=(image,))
+                thread_tmp.start()
+                time.sleep(0.03)                                                            
         except RuntimeError, e:
             print("[INFO] caught a RuntimeError")
 
