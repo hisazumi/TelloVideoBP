@@ -21,7 +21,8 @@ def marker_detected(markers):
     print(markers)
     for m in markers:
         print(m)
-        send("{0},{1},{2},{3}".format(m[0], int(m[1][0][0]*1000), int(m[1][0][1]*1000), int(m[1][0][2]*1000)))
+#        send("{0},{1},{2},{3}".format(m[0], int(m[1][0][0]*1000), int(m[1][0][1]*1000), int(m[1][0][2]*1000)))
+        send("{0},{1},{2},{3}".format(m[0], int(m[1][0][0]*100), int(m[1][0][1]*100), int(m[1][0][2]*100)))        # 20191018
 
 
 if __name__ == "__main__":
