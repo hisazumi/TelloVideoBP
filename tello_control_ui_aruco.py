@@ -37,7 +37,7 @@ class TelloUI:
         self.gray_frame = None
         self.aruco_dict = aruco.Dictionary_get(aruco.DICT_7X7_100)
         self.aruco_parameters = aruco.DetectorParameters_create()
-        self.markerLength = 0.125
+        self.markerLength = 0.07                                    # 20191018 0.125 -> 0.07
         self.cameraMatrix = np.array( [[912.47666820481254,0.00000000000000,474.02795667773609],
             [0.00000000000000,914.52093266876273,369.85907824947975],
             [0.00000000000000,0.00000000000000,1.00000000000000]] )
@@ -64,10 +64,10 @@ class TelloUI:
         self.btn_pause.pack(side="bottom", fill="both",
                             expand="yes", padx=10, pady=5)
 
-        self.btn_landing = tki.Button(
-            self.root, text="Open Command Panel", relief="raised", command=self.openCmdWindow)
-        self.btn_landing.pack(side="bottom", fill="both",
-                              expand="yes", padx=10, pady=5)
+        #self.btn_landing = tki.Button(
+        #    self.root, text="Open Command Panel", relief="raised", command=self.openCmdWindow)
+        #self.btn_landing.pack(side="bottom", fill="both",
+        #                      expand="yes", padx=10, pady=5)
         
         # start a thread that constantly pools the video sensor for
         # the most recently read frame
