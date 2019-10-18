@@ -64,10 +64,10 @@ class TelloUI:
         self.btn_pause.pack(side="bottom", fill="both",
                             expand="yes", padx=10, pady=5)
 
-        #self.btn_landing = tki.Button(
-        #    self.root, text="Open Command Panel", relief="raised", command=self.openCmdWindow)
-        #self.btn_landing.pack(side="bottom", fill="both",
-        #                      expand="yes", padx=10, pady=5)
+        self.btn_landing = tki.Button(
+            self.root, text="Open Command Panel", relief="raised", command=self.openCmdWindow)
+        self.btn_landing.pack(side="bottom", fill="both",
+                              expand="yes", padx=10, pady=5)
         
         # start a thread that constantly pools the video sensor for
         # the most recently read frame
