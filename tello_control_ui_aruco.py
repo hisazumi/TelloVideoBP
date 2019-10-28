@@ -9,6 +9,9 @@ import os
 import time
 import platform
 
+# socket
+import socket
+
 # aruco
 import cv2.aruco as aruco
 import numpy as np
@@ -31,7 +34,12 @@ class TelloUI:
         self.outputPath = outputpath # the path that save pictures created by clicking the takeSnapshot button 
         self.frame = None  # frame read from h264decoder and used for pose recognition 
         self.thread = None # thread of the Tkinter mainloop
-        self.stopEvent = None  
+        self.stopEvent = None
+
+        # command
+        self.recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.recv_sock.bind(("", 60009))
+        self.recv_sock.setblocking(0)
 
         # aruco
         self.gray_frame = None
@@ -136,7 +144,19 @@ class TelloUI:
                 else:
                     thread_tmp = threading.Thread(target=self._updateGUIImage,args=(image,))
                     thread_tmp.start()
-                    time.sleep(0.03)                                                            
+                    time.sleep(0.03)
+
+                # command
+                try:
+                    data, addr = self.recv_sock.recvfrom(4)
+                    recvstr = data.decode('utf-8')
+                    print(recvstr)
+                    if recvstr == 'pic;':
+                        self.takeSnapshot()
+                except socket.error, e:
+                    if e.errno != 10035: #blocking io is failed
+                        print(e)
+    
         except RuntimeError, e:
             print("[INFO] caught a RuntimeError")
 
