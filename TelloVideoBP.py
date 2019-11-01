@@ -4,6 +4,7 @@ from time import sleep
 import threading
 import sys
 from socket import *
+import pprint
 
 drone = False
 telloui = False
@@ -20,9 +21,11 @@ def send(str):
 def marker_detected(markers):
     print(markers)
     for m in markers:
-        print(m)
-#        send("{0},{1},{2},{3}".format(m[0], int(m[1][0][0]*1000), int(m[1][0][1]*1000), int(m[1][0][2]*1000)))
-        send("{0},{1},{2},{3}".format(m[0], int(m[1][0][0]*100), int(m[1][0][1]*100), int(m[1][0][2]*100)))        # 20191018
+#        pprint.pprint(m) # pitch yaw roll
+        send("{0},{1},{2},{3},{4},{5},{6}".format(m[0], 
+            m[1][0], m[1][1], m[1][2], # tvec
+            m[2][0], m[2][1], m[2][2]  # pitch yaw roll
+            )) 
 
 
 if __name__ == "__main__":
@@ -31,8 +34,15 @@ if __name__ == "__main__":
     telloui = TelloUI(drone, "./img/")
     telloui.marker_detected = marker_detected
 
-    for_debug = False
+    if len(sys.argv) >= 2 and sys.argv[1] == 'debug':
+        print("debugging...")
+        for_debug = True
+        drone.for_debug = for_debug
+    else:
+        for_debug = False
+
     if for_debug:
+        sleep(2)
         # for debug
         drone.send_command('command')
         print('sent: command')

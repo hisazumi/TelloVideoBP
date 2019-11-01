@@ -120,7 +120,16 @@ class TelloUI:
 
                     rvecs, tvecs, _objPoints = aruco.estimatePoseSingleMarkers(corners, self.markerLength, self.cameraMatrix, self.distCoeffs)
                     for i, corner in enumerate( corners ):
-                        markers.append((ids[i][0], tvecs[i]))
+
+                        tvec = np.squeeze(tvecs[i])
+                        rvec = np.squeeze(rvecs[i])
+                        rvec_matrix = cv2.Rodrigues(rvec)
+                        rvec_matrix = rvec_matrix[0]
+                        transpose_tvec = tvec[np.newaxis, :].T
+                        proj_matrix = np.hstack((rvec_matrix, transpose_tvec))
+                        euler_angle = cv2.decomposeProjectionMatrix(proj_matrix)[6] # [deg]
+
+                        markers.append((ids[i][0], [int(e*100) for e in tvec], [int(e[0]) for e in euler_angle]))
 
                         points = corner[0].astype(np.int32)
                         ar_center_x = int(np.median((points[0][0], points[1][0], points[2][0], points[3][0])))

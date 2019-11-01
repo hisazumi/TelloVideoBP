@@ -21,6 +21,7 @@ class Tello:
         :param tello_port (int): Tello port.
         """
 
+        self.for_debug = False
         self.video_only_flag = True
         self.abort_flag = False
         self.decoder = libh264decoder.H264Decoder()
@@ -143,9 +144,7 @@ class Tello:
 
         """
 
-        for_debug=False
-
-        if for_debug:
+        if self.for_debug:
             print (">> send cmd: {}".format(command))
             self.abort_flag = False
             timer = threading.Timer(self.command_timeout, self.set_abort_flag)
